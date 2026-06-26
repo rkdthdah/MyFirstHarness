@@ -46,13 +46,13 @@ Empty values use `—`. `@ac` may be `—` for non-AC-driven tests. AC IDs follo
 
 ### Test Infrastructure
 
-Per qa.spec, all Component and Integration tests render through `frontend/test-utils/render.tsx`. Direct use of RTL's `render` is forbidden — bypasses Theme/Lang providers.
+Per qa.spec, all Component and Integration tests render through `frontend/test-utils/render.tsx`. Direct use of RTL's `render` is forbidden — bypasses required providers (MemoryRouter, LangProvider, ThemeProvider).
 
 ## test-ui.task
 
 ### Coverage Mapping
 
-Test level decision (per qa.spec *Test Pyramid*):
+Disposition each `covers-acs` ID:
 
 | AC signal scope | Test Level | Location |
 | --------------- | ---------- | -------- |
@@ -60,7 +60,6 @@ Test level decision (per qa.spec *Test Pyramid*):
 | Page-level flow, multi-component composition, navigation | Integration | `ui/prototype/pages/**/*.test.tsx` |
 
 UX spec anchor resolves to one row in: Data States, Component Interaction, Validation Rules, or Navigation.
-
 Subject path in `@subject` header is relative to `frontend/` (e.g. `ui/components/Topbar.tsx`).
 
 ### Test Implementation
@@ -73,14 +72,48 @@ Tooling per level:
 | Integration | RTL (`render` from `test-utils`), `user-event`, prototype mock imports |
 
 Component test must include:
+
 - Accessibility assertion via `jest-axe`
 - i18n key resolution check when AC covers display text (assert resolved text, not raw key)
-
+`render` from `test-utils` returns `{ user, ...rtlResult }` with a pre-configured `userEvent.setup()` — prefer the bundled `user` over calling `userEvent.setup()` manually.
 Integration test:
+
 - Mock data imported directly from `ui/prototype/mocks/` — no MSW (prototype is API-less)
+- If a test needs a `test-utils` helper or matcher not yet present, author the test assuming it exists and surface the introduction as a task outcome — never block on an unmet prerequisite
 
 ### Run & Verify
 
 ```bash
 npm run test
 ```
+
+## design-test.task
+
+### Coverage Mapping
+
+Disposition each `covers-acs` ID (per design-test W3):
+
+| Disposition | When | Note |
+| ----------- | ---- | ---- |
+| `scenario` | Behavior observable at the unit's boundary (Feature level) | Designed in Scenario Design |
+| `covered-by-ui-test` | Behavior verified by a Phase 1 UI test | Cross-reference Story *UI Test Coverage* |
+| `defer-to-verify` | Cross-unit, not observable at this boundary | Verified at integration |
+| `N/A` | No verifiable behavior in this unit | State the cause — incl. jsdom limits (e.g. "jsdom computes no layout") for geometry/visual ACs |
+
+Business-logic units test at **Feature** level (`features/**/*.test.ts`). `@subject` is the unit's exported entry relative to `frontend/`.
+
+### Scenario Design
+
+| Hook layer | Strategy |
+| ---------- | -------- |
+| No backend call | Seed real jsdom surface (`localStorage`) in *given*; supply router/theme/lang context through a provider wrapper. No MSW |
+| Backend call | Mock the API boundary via MSW; never mock the hook's own logic |
+
+- Hooks that read provider context must render through a `test-utils` wrapper, never RTL's `renderHook` directly. If a needed wrapper is not yet in `test-utils/`, design the scenarios assuming it exists and surface the introduction as a task outcome — never record it as an unmet prerequisite in the document.
+- `setup.ts` resets DOM and storage after each test; scenarios assume isolation and arrange state in *given*.
+- File header `@level feature` (or `unit` for pure functions).
+
+### Handoff Composition
+
+- Subject path is the dev unit's exported entry relative to `frontend/`.
+- Test files inherit import/dependency limits from `ar.spec.md` *Forbidden Dependencies* — no per-design list.

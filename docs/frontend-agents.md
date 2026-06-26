@@ -104,29 +104,17 @@ PM → UX (design + prototype) → PM → QA (testability + UI test)
 
 ### What Happens at Each Stage
 
-1. **UX** creates reusable components in `ui/components` or `ui/layouts`,
-   registers them in Storybook, and builds mock-based prototype pages
-   in `ui/prototype/pages` through co-design with the user.
+1. **UX** creates reusable components in `ui/components` or `ui/layouts`, registers them in Storybook, and builds mock-based prototype pages in `ui/prototype/pages` through co-design with the user.
 2. **UX** writes the UX Spec and hands off to PM.
-3. **QA** verifies AC testability and writes/runs UI component tests and
-   integration tests against the prototype. Failures return to UX
-   (before AR, minimizing rollback cost).
-4. **AR** designs architecture, defines interfaces in `shared/types/`,
-   and produces implementation design documents (`dev-XXX-XX.md`).
-5. **QA** designs Given-When-Then test scenarios and produces test
-   design documents (`test-XXX-XX_designed.md`), one per AR design document.
-6. **TE** implements test code based on test design documents.
-   QA reviews and approves (`complete`) or requests revision (`revision-requested`).
-7. **DE** implements hooks and APIs in `features/{domain}` and creates
-    production pages in `app/pages` by replacing mock imports with hook
-    imports.
-8. **AR** registers routes in `app/routes.tsx` and validates the
-    integrated build.
-9. **QA** performs final verification — runs all tests, regression check,
-   and updates Test Coverage Map.
+3. **QA** verifies AC testability and writes/runs UI component tests and integration tests against the prototype. Failures return to UX (before AR, minimizing rollback cost).
+4. **AR** designs architecture, defines interfaces in `shared/types/`, and produces implementation design documents (`dev-XXX-NN_designed.md`).
+5. **QA** produces a paired test document per AR design document — a Given-When-Then design for business-logic units, emitted at `_complete` for units with no unit-level logic to verify.
+6. **TE** implements test code based on test design documents. QA reviews and renames to `_complete` (approved) or `_rework` (review findings); TE may raise `_redesign-request` when the design itself is unworkable.
+7. **DE** implements hooks and APIs in `features/{domain}` and creates production pages in `app/pages` by replacing mock imports with hook imports.
+8. **AR** registers routes in `app/routes.tsx` and validates the integrated build.
+9. **QA** performs final verification — runs all tests, regression check, and updates Test Coverage Map.
 10. **AR** runs merge readiness checks (typecheck, depcheck, build, tests).
-11. **PM** completes the story, merges story branch to `develop`, removes
-   worktree and deletes the story branch.
+11. **PM** completes the story, merges story branch to `develop`, removes worktree and deletes the story branch.
 
 ### Prototype → Production Transition
 
@@ -153,18 +141,18 @@ with hook imports only.
 | ---------------- | ----------------------------- | ------------------------------------------------------ |
 | ar.spec.md       | `frontend/ar.spec.md`       | Architecture rules, ownership, dependencies (AR owned) |
 | qa.spec.md       | `frontend/qa.spec.md`       | Test specification (QA owned)                          |
+| ar.ar.rules.md   | `frontend/ar.ar.rules.md`   | AR agent rules (AR owned)                              |
 | ux.ar.rules.md   | `frontend/ux.ar.rules.md`   | UX agent rules (AR owned)                              |
 | de.ar.rules.md   | `frontend/de.ar.rules.md`   | DE agent build rules (AR owned)                        |
 | qa.qa.rules.md   | `frontend/qa.qa.rules.md`   | QA agent rules (QA owned)                              |
 | te.qa.rules.md   | `frontend/te.qa.rules.md`   | TE agent rules (QA owned)                              |
-| de.qa.rules.md   | `frontend/de.qa.rules.md`   | DE agent test-gate rules (QA owned)                    |
 | storybook.idx.md | `frontend/storybook.idx.md` | UI asset catalog (UX owned)                            |
 | prototype.idx.md | `frontend/prototype.idx.md` | Story-to-file index (UX owned)                         |
 
 ar.spec.md is the single source of truth for architecture. AR extracts
-agent-specific rules into AR-owned rules files (`ux.ar.rules.md`, `de.ar.rules.md`).
+agent-specific rules into AR-owned rules files (`ar.ar.rules.md`, `ux.ar.rules.md`, `de.ar.rules.md`).
 qa.spec.md is the single source of truth for testing. QA extracts
-test rules into QA-owned rules files (`qa.qa.rules.md`, `te.qa.rules.md`, `de.qa.rules.md`).
+test rules into QA-owned rules files (`qa.qa.rules.md`, `te.qa.rules.md`).
 
 Rules files follow the `{consumer}.{owner}.rules.md` convention.
 A single consumer may read multiple rules files when multiple owners govern its work

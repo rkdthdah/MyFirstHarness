@@ -41,12 +41,13 @@ owner: or
 
 ### 1. Session Startup
 
-Per AGENTS.md *Session Startup Scan*. Queueing rules:
+Per AGENTS.md *Session Startup Scan*. Queueing rules (filename owner = `QA`, branch on the document's DoD):
    **Phase 2 — Implementation Documents (priority):**
-      - `dev/dev-*_complete.md` → Workflow 7 (collected files)
-      - `test/test-*_implement.md` → Workflow 5 (collected files)
-      - `test/test-*_redesign-request.md` → Workflow 6 (collected files)
-      - `dev/dev-*_designed.md` without paired `test/test-XXX-AC-NN_*.md` → Workflow 4 (collected files)
+      - a story where every `dev/dev-*` is `_QA` Reviewed or `[N/A]`, `Verified` not, suite and paired tests `_QA` Reviewed or `[N/A]` → Workflow 7
+      - `test/test-*_QA.md` with `Implemented` checked, `Reviewed` not → Workflow 5 (collected files)
+      - `test/test-*_QA.md` with `Designed` unchecked → Workflow 6 (collected files)
+      - a story whose `dev/dev-*` units are all `Designed` checked with no paired `test/test-*` yet → Workflow 4
+      - a story whose `dev/dev-*` are all `_Complete` and `test/test-*` are all `_QA` Reviewed or `[N/A]` → Workflow 8
   **Phase 1 — Story file (Owner = `QA`):**
       - If [Testability DoD checked] & [UI Test DoD NOT checked] & [UI Test DoD NOT `[N/A]`] → queue Workflow 3
       - Else if [Testability DoD NOT checked] → queue Workflow 2
@@ -92,88 +93,117 @@ Trigger: Story with Owner `QA`, [Testability DoD checked] & [UI Test DoD NOT che
 3. On task `Completed`:
    - Check off Story DoD `UI Test`
    - Append Handoff Note (QA → AR), rename Story Owner to `AR`
-4. Commit in `.worktrees/story/STORY-XXX/`:
+4. If UI testing requires a test-spec change (a test-utils increment or tool the spec does not yet describe) → Execute Workflow 9 inline
+5. Commit the test docs in `.worktrees/story/STORY-XXX/`:
    ```
    [STORY-XXX][qa][UI Test] {{summary}}
    - {{detail}} (optional, as many as needed)
    ```
-5. Execute `write-session-log.task.md`
+6. Execute `write-session-log.task.md`
 
 ### 4. Test Design
 
-Trigger: One or more `dev/dev-*_designed.md` files without a paired `test/test-XXX-AC-NN_*.md`
+Trigger: a story whose `dev/dev-*` units are all `_QA`, `Designed` checked, with no paired `test/test-*` yet
 
-1. For each collected dev file → Execute `design-test.task.md`
-2. Commit in `.worktrees/story/STORY-XXX/`:
-   ```
+1. Execute `design-test.task.md` once for the story → per dev unit `Designed` | `Design Blocked`, plus the story suite `test-XXX-00`
+2. Apply per dev unit, append a Handoff Note:
+   - `Designed`, business-logic → test document, `Designed` checked, owner → `TE`
+   - `Designed`, placeholder / ar-integration → test document, `Designed` checked, `Implemented` / `Reviewed` `[N/A]`, owner → `QA`
+   - `Design Blocked` → no test document; uncheck dev `Designed`, owner → `AR`
+3. Apply the story suite `test-XXX-00`, append a Handoff Note:
+   - closing (no deferred AC), or only E2E scenarios → `Designed` checked, `Implemented` / `Reviewed` `[N/A]`, owner → `QA` (E2E is authored at verification)
+   - holds integration / contract scenarios → `Designed` checked, owner → `TE`
+4. If any design records a required test-spec change → Execute Workflow 9 inline
+5. Commit the test docs in `.worktrees/story/STORY-XXX/`:
+```
    [STORY-XXX][qa][Test Design] {{summary}}
-   - AC-N-NN: designed | placeholder
+   - test-XXX-NN: designed | blocked
+   - test-XXX-00: designed | closing
    - {{detail}} (optional, as many as needed)
-   ```
-3. Execute `write-session-log.task.md`
+```
+6. Execute `write-session-log.task.md`
+
 
 ### 5. Test Review
 
-Trigger: One or more `test/test-*_implement.md` files collected
+Trigger: One or more `test/test-*_QA.md` with `Implemented` checked, `Reviewed` not.
 
 1. For each collected file → Execute `review-test.task.md`
-2. Commit in `.worktrees/story/STORY-XXX/`:
-   ```
+2. For each, update DoD, rename owner, append a Handoff Note:
+   - `Pass`, paired test → check `Reviewed`, owner → `AR`; rename the paired `dev/dev-*_QA.md` owner → `DE`
+   - `Pass`, suite `test-XXX-00` → check `Reviewed`, owner stays `QA` (no paired dev; awaits verification)
+   - `Rework` (code-origin) → uncheck `Implemented`, owner → `TE`
+   - `Redesign` (design-origin) → uncheck `Designed`, owner → `QA`; record code-class findings in the note
+
+3. Commit in `.worktrees/story/STORY-XXX/`:
+```
    [STORY-XXX][qa][Test Review] {{summary}}
-   - AC-N-NN: complete | rework
+   - test-XXX-NN: reviewed | rework | redesign
    - {{detail}} (optional, as many as needed)
-   ```
-3. Execute `write-session-log.task.md`
+```
+4. Execute `write-session-log.task.md`
 
 ### 6. Test Revision
 
-Trigger: One or more `test/test-*_redesign-request.md` files collected
+Trigger: One or more `test/test-*_QA.md` with `Designed` unchecked.
 
-1. For each collected file → Execute `revise-test-design.task.md`
-2. Commit in `.worktrees/story/STORY-XXX/`:
-   ```
+1. For each collected file → Execute `revise-test-design.task.md` → outcome `Designed` | `Design Blocked`
+2. Apply the outcome, append a Handoff Note:
+   - `Designed` → re-check `Designed`, owner → `TE`
+   - `Design Blocked` → uncheck the paired `dev/dev-*`'s `Designed`, owner → `AR`; the test `Designed` stays unchecked, owner → `AR`
+3. If a revision needs a test-spec change → Execute Workflow 9 inline
+4. Commit the test docs in `.worktrees/story/STORY-XXX/`:
+```
    [STORY-XXX][qa][Test Revision] {{summary}}
-   - AC-N-NN: redesigned
+   - test-XXX-NN: revised | design-blocked
    - {{detail}} (optional, as many as needed)
-   ```
-3. Execute `write-session-log.task.md`
+```
+5. Execute `write-session-log.task.md`
 
 ### 7. Verification
 
-Trigger: One or more `dev/dev-*_complete.md` files collected
+Trigger: a story where every `dev/dev-*` is `_QA` Reviewed or `[N/A]`, `Verified` not — units done; the suite `test-XXX-00` is `_QA` and ready (Reviewed, closing, or E2E-only awaiting verification), and every paired `test/test-*` is `_QA` Reviewed or `[N/A]`.
 
-1. For each collected file → Execute `verify-implementation.task.md`
-2. Commit in `.worktrees/story/STORY-XXX/`:
-   ```
+1. Execute `verify-implementation.task.md` once for the story. If it reports a needed spec increment → Execute Workflow 9 inline, then re-run
+2. `Pass` → check `Verified` on every dev, owner → `AR`; every paired `test/test-*` and the suite `test-XXX-00` owner → `AR`; append a Handoff Note
+3. `Fail` → for each implicated pair: uncheck dev `Designed`, owner → `AR`; paired `test/test-*` owner → `AR`. The suite `test-XXX-00` stays `QA`. Append a Handoff Note stating the failed checks
+4. Commit in `.worktrees/story/STORY-XXX/`:
+```
    [STORY-XXX][qa][Verification] {{summary}}
-   - dev-NN: verified | rework dev | rework dev, test | rework test
+   - verified (× N) | redesign: dev-NN, …
    - {{detail}} (optional, as many as needed)
-   ```
-3. Execute `write-session-log.task.md`
-4. If all `dev/dev-*` in this worktree are `_verified` AND all `test/test-*` are `_complete` → Execute Workflow 8
+```
+5. Execute `write-session-log.task.md`
 
 ### 8. Project Artifact Management
 
-Trigger: Invoked from W7 on story completion, or explicit user/OR request.
+Trigger: a story whose `dev/dev-*` are all `_Complete` and whose `test/test-*` are all `_QA` Reviewed or `[N/A]`; or explicit user/OR request.
 
-1. Execute `manage-qa-artifact.task.md`
-2. Commit in `.worktrees/agents/`:
-   ```
+1. Mark each `test/test-*` (paired and suite) `Complete` (owner → `Complete`)
+2. Execute `manage-qa-artifact.task.md`
+3. Commit in `.worktrees/agents/`:
+```
    [qa][Project Artifact Management] {{summary}}
    - {{detail}} (optional, as many as needed)
-   ```
-3. Execute `write-session-log.task.md`
+```
+4. Execute `write-session-log.task.md`
 
 ### 9. Test Strategy Management
 
-Trigger: Story completion reveals new test patterns, or explicit user/OR request
+Trigger: a test-spec change raised **inline** by another Workflow (W3/W4/W6/W7); OR new test patterns at story completion, or user/OR request (**standalone**)
 
-1. Execute `manage-qa-spec.task.md`
-2. Commit in `.worktrees/agents/`:
-   ```
-   [qa][Test Strategy Management] {{summary}}
-   - {{detail}} (optional, as many as needed)
-   ```
+1. Execute `manage-qa-spec.task.md` (adds the test-utils increment and updates `qa.spec.md` together)
+2. Commit — infrastructure/spec change only, never the calling Workflow's test docs:
+   - Raised inline by a story workflow (W3/W4/W6/W7) → `.worktrees/story/STORY-XXX/`:
+     ```
+     [STORY-XXX][qa][Test Strategy Management] {{summary}}
+     - {{detail}} (optional, as many as needed)
+     ```
+   - Story completion, or user/OR request → `.worktrees/agents/`:
+     ```
+     [qa][Test Strategy Management] {{summary}}
+     - {{detail}} (optional, as many as needed)
+     ```
 3. Execute `write-session-log.task.md`
 
 ### 10. Session End
@@ -208,8 +238,7 @@ Trigger: Story completion reveals new test patterns, or explicit user/OR request
 | -------------------- | ---------- | ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
 | Task                 | r          | `~/{{ProjectRoot}}/agents/tasks/`                           | Task procedures                                                                                        |
 | Stories              | rw         | `~/{{ProjectRoot}}/agents/docs/stories/`                    | Story folder per STORY-XXX (Story, UX spec, dev/, test/, ../archived/)                                 |
-| UX specs             | r          | `~/{{ProjectRoot}}/agents/docs/ux-specs/`                   | Read UX spec via Story reference                                                                       |
-| Test designs         | rw         | `~/{{ProjectRoot}}/agents/docs/test-designs/`               | Test design documents                                                                                  |
+| UX specs             | r          | `~/{{ProjectRoot}}/agents/docs/stories/STORY-XXX/`          | UX spec lives in the Story folder; read via Story reference                                            |
 | Test Coverage Map    | rw         | `~/{{ProjectRoot}}/docs/test-coverage-map.md`               | Project-level test coverage                                                                            |
 | Frontend             | r (rw)     | `~/{{ProjectRoot}}/frontend/`                               | Frontend project workspace,<br />Editable areas are defined in a separate file                         |
 | Backend              | r (rw)     | `~/{{ProjectRoot}}/backend/`                                | Backend project workspace,<br />Editable areas are defined in a separate file                          |

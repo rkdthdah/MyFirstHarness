@@ -83,16 +83,14 @@ frontend/
 | File                | Owner | Readers              |
 | ------------------- | ----- | -------------------- |
 | ar.spec.md          | AR    | all                  |
+| ar.ar.rules.md      | AR    | AR                   |
 | ux.ar.rules.md      | AR    | UX                   |
 | de.ar.rules.md      | AR    | DE                   |
 | qa.spec.md          | QA    | all                  |
 | qa.qa.rules.md      | QA    | QA                   |
 | te.qa.rules.md      | QA    | TE                   |
-| de.qa.rules.md      | QA    | DE                   |
 | storybook.idx.md    | UX    | UX                   |
 | prototype.idx.md    | UX    | UX                   |
-
-Agents read only their own rules file — not spec files, not other agents' rules.
 
 ### Dependency Rules
 
@@ -115,6 +113,15 @@ shared                    → app, features
 app, ui, features, shared → test-utils, **/*.test.*
 test-utils                → app
 ```
+
+## Library Introduction
+
+Stack bindings for introducing a runtime/architecture library (introduction is AR-authored — AR owns this spec):
+
+- An introduction is an edit to this spec (a new entry under *Dependency Rules*, a new package, a new directory).
+- A library consumed by `ui/` must be made `ui/`-consumable — wrapped in a `ui/components` component, or granted an explicit *Dependency Rules* entry. `ui/` never imports an unwrapped third-party module directly.
+- A new UI capability is a prototype defect only when the prototype omitted it; when a library can supply it, it is a make-or-buy candidate.
+- AR may add a Story **External Dependencies** row directly when it leaves every AC's interpretation unchanged and needs no new context doc; otherwise it routes to PM.
 
 ## Prototype Convention
 

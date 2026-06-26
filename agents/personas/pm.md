@@ -96,17 +96,30 @@ Trigger: Story with Owner `PM`, NOT meeting Workflow 4/5/6 conditions
       `git worktree remove .worktrees/story/STORY-XXX && git branch -d story/STORY-XXX`
     - Execute `write-session-log.task.md`, end workflow
 3. If task ended `Major Rework`:
-    - Back up the rewritten Story document to a temp location outside the worktree
+    - Retain prior Story content as reference for the rewrite (read into agent context)
     - Identify the New Story commit:
-      `NEW_STORY_SHA=$(git log --reverse --format=%H -- agents/docs/stories/STORY-XXX/ | head -1)`
-    - Roll back working tree to that commit:
-      `git checkout ${NEW_STORY_SHA} -- . && git clean -fd`
-    - Restore the rewritten Story document from temp
-    - UI required → Handoff Note (PM → UX), rename Story Owner to `UX`
-    - No UI → Handoff Note (PM → QA), rename Story Owner to `QA`
+       `NEW_STORY_SHA=$(git log --reverse --format=%H -- agents/docs/stories/STORY-XXX/ | head -1)`
+    - Roll back working tree (including code under frontend/, backend/, etc.) to that commit:
+       `git checkout ${NEW_STORY_SHA} -- . && git clean -fd`
+    - Remove tracked files added since the New Story commit:
+      `git diff --name-only --diff-filter=A ${NEW_STORY_SHA} HEAD | xargs -r git rm`
+    - Execute `create-story.task.md` with prior Story content as reference; STORY-XXX and worktree already exist, reuse them
+    - If create-story ended `Discarded`: follow Workflow 2 step 4 archival sequence (inline if duplication is preferred over reference)
+    - On create-story `Approved`:
+      - Check off Story DoD `Requirements`
+      - UI required → Handoff Note (PM → UX), rename Story Owner to `UX`
+      - No UI → Handoff Note (PM → QA), rename Story Owner to `QA`
 4. On task `Minor Revision`:
-    - Determine source from most recent inbound Handoff Note (UX | QA | AR)
-    - Append Handoff Note (PM → {source}), rename Story Owner to `{source}`
+    - Uncheck DoD items invalidated by the change set:
+      - `ux-spec` in change set → uncheck `Design`, `Testability`, `UI Test`
+      - `ac` in change set → uncheck `Testability`; uncheck `UI Test` if not `[N/A]`
+      - `story-meta` / `context-doc` only → no uncheck
+    - Determine next Owner:
+      - `Design` unchecked → `UX`
+      - else `Testability` or `UI Test` unchecked → `QA`
+      - else → source agent from inbound Handoff Note
+    - Append Handoff Note (PM → {next owner}), rename Story Owner to `{next owner}`
+    - In the Workflow 3 commit, record unchecked DoD items in the detail lines (e.g. `- DoD unchecked: Testability, UI Test`)
 5. Commit in `.worktrees/story/STORY-XXX/`:
    ```
    [STORY-XXX][pm][Story Revision] {{summary}}
@@ -130,23 +143,18 @@ Trigger: Story with Owner `PM`, [Handoff from UX] & [Design DoD checked] & [Test
 
 Trigger: Story with Owner `PM`, [Development DoD checked]
 
-1. Read the full Story document
-2. Execute Workflow 6 (Project Artifact Management) in `.worktrees/story/STORY-XXX/`
-3. Check off Story DoD `Delivery`
-4. rename Story Owner to `Complete`
-5. Move story folder to archive:
-   `git mv agents/docs/stories/STORY-XXX agents/docs/stories/archived/STORY-XXX`
-6. Move any context docs referenced by this story to `docs/context/archived/`:
-   `git mv docs/context/{file} docs/context/archived/{file}` (per External Dependencies row with Context Doc set)
-7. Commit in `.worktrees/story/STORY-XXX/`:
+1. Execute Workflow 6 (Project Artifact Management) in `.worktrees/story/STORY-XXX/`
+2. Check off Story DoD `Delivery`; rename Story Owner to `Complete`
+3. Execute `complete-story.task.md` (reads the Story, archives its folder and referenced context docs)
+4. Commit in `.worktrees/story/STORY-XXX/`:
    ```
    [STORY-XXX][pm][Story Completion] summary
    - detail (optional, as many as needed)
    ```
-8. Merge and cleanup:
+5. Merge and cleanup:
    `git merge story/STORY-XXX` into `develop`, then
    `git worktree remove .worktrees/story/STORY-XXX && git branch -d story/STORY-XXX`
-9. Execute `write-session-log.task.md`
+6. Execute `write-session-log.task.md`
 
 ### 6. Project Artifact Management
 

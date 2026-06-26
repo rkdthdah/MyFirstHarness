@@ -15,11 +15,14 @@ Record session activity and persist current state for cross-session continuity.
 
 ### 1. Append Session Log Entry
 
+Before writing, resolve current local time from the execution environment.
+Do not infer, guess, reuse, or invent timestamps.
+
 File: `~/{{ProjectRoot}}/agents/sessionlogs/{{agent-id}}/session-log_{{YYYYMMDD-HHMM}}.md`
 
 If file does not exist → create per `session-log.tmp.md`
 
-On every execution, append (HH:MM is current time):
+On every execution, append using resolved current local time:
 
 ```
 ### {{HH:MM}} — [{{tag}}]
@@ -32,8 +35,7 @@ On every execution, append (HH:MM is current time):
 
 File: `~/{{ProjectRoot}}/agents/sessionlogs/{{agent-id}}/latest-state.md`
 
-Overwrite entirely per `latest-state.tmp.md`
-Max 30 lines. Only what the NEXT session needs
+Overwrite entirely per `latest-state.tmp.md` — structure and length limit per template.
 
 ### 3. Self-Evaluation (Session End only)
 
@@ -56,3 +58,4 @@ Review this session's activities against:
 - Session log: append-only, never edit past entries
 - latest-state.md: always full overwrite, never append
 - Keep entries concise
+- Session logs and latest-state are gitignored local runtime artifacts. Do not stage or commit

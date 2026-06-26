@@ -48,6 +48,7 @@ ui → features, app
 - Components must be pure UI — props only, no data fetching.
 - Reuse existing components from `storybook.idx.md` before creating new ones.
 - New components require user approval before Storybook registration.
+- Do not add external libraries. Where a UI pattern has a well-known library solution, hand-build it in the prototype and flag it for AR. If AR introduces one, consume it only through the `ui/`-consumable form AR provides (a wrapping component or an opened dependency rule) — never import the library directly into `ui/prototype`.
 
 ### File Header
 
@@ -163,3 +164,64 @@ If new components or layouts were registered in Storybook, add a row to the appr
 
 - [ ] `prototype.idx.md` updated (all new/modified files)
 - [ ] `storybook.idx.md` updated (if new components/layouts registered)
+
+## revise-ux-spec
+
+### Change Triage
+
+Scan these indexes to locate currently registered assets for this story:
+
+1. `frontend/prototype.idx.md` — current row for this story (existing components/layouts/pages)
+2. `frontend/storybook.idx.md` — current components/layouts owned by this story
+
+**Checklist:**
+
+- [ ] Current prototype.idx.md row for this story read
+- [ ] storybook.idx.md entries owned by this story identified
+
+### Revision
+
+When prototype edit is required, use the same locations and run command as create-ux-spec.
+
+#### Run Prototype
+
+```bash
+npm run proto
+```
+
+### Validation
+
+```bash
+npm run proto         # Prototype runs without errors
+npm run typecheck     # TypeScript type correctness
+npm run depcheck      # No forbidden dependency violations
+```
+
+**Checklist:**
+
+- [ ] Prototype runs without errors
+- [ ] Type check passed
+- [ ] Dependency check passed
+- [ ] File headers updated where component lists changed
+- [ ] Import conventions followed on edited files
+
+### Post-Update
+
+Update catalogs to reflect changes:
+
+#### `prototype.idx.md`
+
+Update the existing row for this story:
+- Add newly created files
+- Remove files that are no longer used by the story
+- Update component lists for modified pages
+
+#### `storybook.idx.md`
+
+- Add rows for any new components/layouts registered
+- Remove rows for components/layouts no longer registered
+
+**Checklist:**
+
+- [ ] `prototype.idx.md` row updated (additions and removals)
+- [ ] `storybook.idx.md` updated if component/layout set changed

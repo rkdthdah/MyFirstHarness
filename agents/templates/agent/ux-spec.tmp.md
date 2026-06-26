@@ -21,7 +21,7 @@ type: agent
 
 # [UX-SPEC-XXX]
 
-**Story:** [STORY-XXX](../stories/STORY-XXX/STORY-XXX_*.md)
+**Story:** [STORY-XXX]
 
 ## Prototype Reference
 

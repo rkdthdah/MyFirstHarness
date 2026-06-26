@@ -52,6 +52,7 @@ Analyze a story, build a working prototype through co-design with the user, and 
 - [ ] Glossary-consistent naming
 - [ ] New patterns asked for catalog registration
 - [ ] User confirmed
+- [ ] UI patterns with a well-known library solution (skeleton loader, date picker, etc.) flagged for AR — hand-built in the prototype, introduction decided by AR
 
 ### 3. UX Spec & Validation
 
@@ -72,7 +73,7 @@ Write UX spec per template. Run validation checks.
 ### 4. Post-Creation
 
 1. Save UX spec to `~/{{ProjectRoot}}/agents/docs/stories/STORY-XXX/UX-SPEC-XXX.md`
-2. Update Story `UX Spec` field: `[UX-SPEC-XXX](../ux-specs/UX-SPEC-XXX.md)`
+2. Update Story `UX Spec` field: `[UX-SPEC-XXX](./UX-SPEC-XXX.md)`
 3. Update catalogs
 4. End task with outcome `Completed`
 
@@ -90,4 +91,5 @@ Write UX spec per template. Run validation checks.
 - UX spec ID = Story ID (STORY-005 → UX-SPEC-005)
 - Unclear requirements → return to PM
 - Glossary terms for UI naming; flag new terms
+- Hand-build UI patterns in the prototype; where a well-known library could supply one, flag it for AR — choosing build-vs-introduce is AR's, not UX's
 - Task outcomes: `Open Questions` | `Completed`

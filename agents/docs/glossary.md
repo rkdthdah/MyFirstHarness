@@ -14,4 +14,4 @@ desc: Shared domain terms and ubiquitous language
 ## Shared
 
 | Term | Code ID | Definition | Source |
-| {{term}} | {{ClassName / variable_name}} | {{kind}} | {{1-2 sentence definition}} | {{STORY-XXX}} |
+| --- | --- | --- | --- |

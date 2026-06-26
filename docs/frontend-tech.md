@@ -7,7 +7,7 @@ owner: ar
 # Frontend Tech Stack
 
 > Technical choices, directory structure, and quality policies for the
-> Project frontend.
+> Web frontend.
 > For agent collaboration, see `frontend-agents.md`.
 
 ---

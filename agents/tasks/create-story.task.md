@@ -46,7 +46,7 @@ Before discovery: scan `~/{{ProjectRoot}}/docs/` (service planning, user scenari
 
 ### 2. Scope Classification & Overlap Check
 
-1. Scan `~/{{ProjectRoot}}/agents/docs/stories/` (including `archived/`) for stories touching the same affected area or external dependencies
+1. Scan `~/{{ProjectRoot}}/agents/docs/stories/` (including `archived/`) for OTHER stories touching the same affected area or external dependencies
 2. For each match:
    - **Complete duplicate** — same requirement → outcome `Discarded`
    - **Iteration** — improves or extends an existing story → record parent
@@ -107,7 +107,7 @@ Write the story using the template.
 2. **Present** to user/agent for final approval
    - Approved → end task
    - Rejected → return to Step 1 with feedback
-   - Discarded → rename Owner to `Discarded`, record reason, task complete
+   - Discarded → end task with outcome `Discarded`, record reason
 
 **Checklist:**
 
